@@ -28,7 +28,7 @@ import java.util.Set;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLEventWriter;
 import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamWriter;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.nifi.annotation.behavior.ReadsAttribute;
 import org.apache.nifi.annotation.behavior.ReadsAttributes;
@@ -39,6 +39,9 @@ import org.apache.nifi.annotation.documentation.SeeAlso;
 import org.apache.nifi.annotation.documentation.Tags;
 import org.apache.nifi.annotation.lifecycle.OnScheduled;
 import org.apache.nifi.components.PropertyDescriptor;
+import org.apache.nifi.components.ValidationContext;
+import org.apache.nifi.components.ValidationResult;
+import org.apache.nifi.components.Validator;
 import org.apache.nifi.flowfile.FlowFile;
 import org.apache.nifi.processor.AbstractProcessor;
 import org.apache.nifi.processor.ProcessContext;
@@ -47,7 +50,6 @@ import org.apache.nifi.processor.ProcessorInitializationContext;
 import org.apache.nifi.processor.Relationship;
 import org.apache.nifi.processor.exception.ProcessException;
 import org.apache.nifi.processor.io.StreamCallback;
-import org.apache.nifi.processor.util.StandardValidators;
 
 import de.odysseus.staxon.json.JsonXMLConfig;
 import de.odysseus.staxon.json.JsonXMLConfigBuilder;
@@ -112,8 +114,8 @@ public class XML2JSON extends AbstractProcessor {
             .name("comma seperated xpath for elements that may occur more than once within a root.")
             .description("comma seperated xpath for elements that may occur more than once within a root.")
             .required(false)
-            .defaultValue("false")
-            .addValidator(StandardValidators.NON_BLANK_VALIDATOR)
+            .defaultValue("")
+            .addValidator(new XPathValidator())
             .build();
     
     public static final PropertyDescriptor MATCHROOT = new PropertyDescriptor.Builder()
@@ -143,7 +145,7 @@ public class XML2JSON extends AbstractProcessor {
         
         final Set<Relationship> relationships = new HashSet<Relationship>();
         relationships.add(JSON);
-        //relationships.add(XML);
+        relationships.add(XML);
         relationships.add(FAILURE);
         this.relationships = Collections.unmodifiableSet(relationships);
     }
@@ -186,11 +188,13 @@ public class XML2JSON extends AbstractProcessor {
     	}
         
         // TODO imple
-        FlowFile outputFlowFile = session.write(flowFile, callback);
+        FlowFile outputFlowFile = session.clone(flowFile);
+        outputFlowFile=session.write(outputFlowFile, callback);
         if(!callback.errors){
         	session.transfer(outputFlowFile,JSON);
-        	//session.transfer(flowFile,XML);
+        	session.transfer(flowFile,XML);
         }else{
+        	session.remove(outputFlowFile);
         	session.transfer(flowFile,FAILURE);
         }
     }
@@ -223,5 +227,26 @@ public class XML2JSON extends AbstractProcessor {
 		        } 
 		}
     	
+    }
+    
+    private static class XPathValidator implements Validator {
+
+        @Override
+        public ValidationResult validate(final String subject, final String input, final ValidationContext validationContext) {
+            try {
+                String error = null;
+                if(input!=null && !input.isEmpty()){
+	                for(String inputStr : input.split(",")){
+	                   if(inputStr.trim().isEmpty())
+	                	   error = "array path cannot be empty";
+	                }
+                }
+
+                return new ValidationResult.Builder().input(input).subject(subject).valid(error == null).explanation(error).build();
+            } catch (final Exception e) {
+                return new ValidationResult.Builder().input(input).subject(subject).valid(false)
+                        .explanation("Unable to initialize XPath engine due to " + e.toString()).build();
+            }
+        }
     }
 }

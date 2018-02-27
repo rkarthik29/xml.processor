@@ -30,7 +30,7 @@ import com.hortonworks.nifi.xml.util.XSD2JOLT;
 
 import de.odysseus.staxon.json.JsonXMLConfigBuilder;
 
-@Tags({"xml","json","convert"})
+@Tags({"xsd","json","jolt","spec"})
 @CapabilityDescription("Convert XML to json")
 @SeeAlso({})
 @ReadsAttributes({@ReadsAttribute(attribute="", description="")})

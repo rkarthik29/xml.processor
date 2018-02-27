@@ -41,12 +41,12 @@ public class XML2JSONTest {
     @Test
     public void testArrayWtihArrayInXML() {
     	testRunner = TestRunners.newTestRunner(XML2JSON.class);
-        testRunner.setProperty(XML2JSON.AUTO_ARRAY, "false");
+        testRunner.setProperty(XML2JSON.AUTO_ARRAY, "true");
         testRunner.setProperty(XML2JSON.INCLUDE_NS, "false");
         testRunner.setProperty(XML2JSON.AUTO_PRIMITIVE, "true");
         testRunner.setProperty(XML2JSON.PRETTY_PRINT, "false");
-        testRunner.setProperty(XML2JSON.ARRAY_ELEMENTS, "/emp/addresses/addr");
-        testRunner.setProperty(XML2JSON.MATCHROOT, "true");
+        testRunner.setProperty(XML2JSON.ARRAY_ELEMENTS, "");
+        testRunner.setProperty(XML2JSON.MATCHROOT, "false");
         testRunner.enqueue("<emp><id>1</id><addresses><addr><type>home</type></addr><addr><type>office</type></addr></addresses></emp>".getBytes());
         
         testRunner.run(1);
@@ -76,6 +76,7 @@ public class XML2JSONTest {
         
         byte[] byteArray = outputFlowFile.get(0).toByteArray();
         String result = new String(byteArray);
+        System.out.println(result);
         assertTrue("{\"emp\":{\"id\":1,\"addresses\":{\"addr\":[{\"type\":\"home\"}]}}}".equals(result));
 
         
