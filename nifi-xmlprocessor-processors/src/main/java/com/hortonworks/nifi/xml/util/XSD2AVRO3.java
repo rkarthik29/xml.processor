@@ -25,14 +25,14 @@ import org.apache.avro.generic.GenericDatumWriter;
 
 import com.google.gson.JsonObject;
 
-public class XSD2AVRO {
+public class XSD2AVRO3 {
 	static HashMap<String, SchemaBuilder.FieldAssembler<Schema>> compMap= new HashMap<String,SchemaBuilder.FieldAssembler<Schema>>();
 	private static List<String> types = new ArrayList<String>();
 	static HashMap<String, SchemaBuilder.FieldAssembler<Schema>> parentMap= new HashMap<String,SchemaBuilder.FieldAssembler<Schema>>();
 	
 	public static void main(String[] args){
 		try{
-		FileInputStream fis = new FileInputStream(new File("/Users/knarayanan/schema.xsd"));
+		FileInputStream fis = new FileInputStream(new File("/Users/knarayanan/RmrkType.xsd"));
 		xsd2avro(fis);
 		 
 		
@@ -66,7 +66,9 @@ public class XSD2AVRO {
 					if(type==null){
 						record = ComplexType.newInstace(name);
 					}else{
-						record = ComplexType.newInstace(type.split(":")[1]);
+						if(type.contains(":"))
+							type=type.split(":")[1];
+						record = ComplexType.newInstace(type);
 						record.setDisplayName(name);
 					}
 					break;
@@ -76,8 +78,8 @@ public class XSD2AVRO {
 					if(name==null){
 						addComplexType(reader, record);
 					}else{
-						ComplexType cType = ComplexType.newInstace(name);
-						addComplexType(reader, cType);
+						record = ComplexType.newInstace(name);
+						addComplexType(reader, record);
 					}
 					
 				}
@@ -87,7 +89,7 @@ public class XSD2AVRO {
 		//assembler.nullableString("empl", null);
 		DataFileWriter<Object> writer =
 		        new DataFileWriter<>(new GenericDatumWriter<>());
-	    writer.create(record.getSchema(),new File("/Users/knarayanan/purchase.avsc"));
+	    writer.create(record.getSchema(),new File("/Users/knarayanan/delta.avsc"));
 	    writer.close();
 	}
 	
@@ -95,7 +97,7 @@ public class XSD2AVRO {
 		while(reader.hasNext()){
 			switch(reader.next()){
 			case XMLEvent.START_ELEMENT:
-				if(reader.getLocalName().equals("element"))
+				if(reader.getLocalName().equals("element")||reader.getLocalName().equals("attribute"))
 						addChildElement(reader, record);
 			case XMLEvent.END_ELEMENT:
 				if(reader.getLocalName().equals("complexType"))
@@ -120,7 +122,9 @@ public class XSD2AVRO {
 						readComplexType(reader,name,record);
 						break;
 					}else{
+						if(type.contains(":")){
 						type=type.split(":")[1];
+						}
 					
 						int minOccurs = reader.getAttributeValue("", "minOccurs")==null?0:Integer.parseInt(reader.getAttributeValue("", "minOccurs"));
 						int maxOccurs = reader.getAttributeValue("", "maxOccurs")==null?0:Integer.parseInt(reader.getAttributeValue("", "maxOccurs"));
@@ -190,7 +194,9 @@ public class XSD2AVRO {
 						record.addElement(new Element(name,cType.getDisplayName(),"required".equals(use),false));
 						break;
 					}else{
-						type=type.split(":")[1];
+						if(type.contains(":")){
+							type=type.split(":")[1];
+						}
 					
 						int minOccurs = reader.getAttributeValue("", "minOccurs")==null?0:Integer.parseInt(reader.getAttributeValue("", "minOccurs"));
 						int maxOccurs = reader.getAttributeValue("", "maxOccurs")==null?0:Integer.parseInt(reader.getAttributeValue("", "maxOccurs"));
@@ -228,7 +234,9 @@ public class XSD2AVRO {
 				record.addElement(new Element(name,name,false,false));
 				addComplexType(detecNextStartElement(reader,"complexType"), cType);
 			}else{
+				if(type.contains(":")){
 				type=type.split(":")[1];
+				}
 				//int minOccurs = reader.getAttributeValue("", "minOccurs")==null?0:Integer.parseInt(reader.getAttributeValue("", "minOccurs"));
 				//int maxOccurs = reader.getAttributeValue("", "maxOccurs")==null?0:Integer.parseInt(reader.getAttributeValue("", "maxOccurs"));
 				//String use = reader.getAttributeValue("", "use")==null?"optional":reader.getAttributeValue("", "use");

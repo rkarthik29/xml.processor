@@ -51,7 +51,7 @@ public class GenerateJoltSpecTest {
         List<MockFlowFile> outputFlowFile = testRunner.getFlowFilesForRelationship(GenerateJoltSpec.SUCCESS);
         
         String joltSpec = outputFlowFile.get(0).getAttribute("joltSpec");
-        //System.out.println(joltSpec);
+        System.out.println(joltSpec);
         assertTrue("[{\"operation\":\"modify-overwrite-beta\",\"spec\":{\"PurchaseOrder\":{\"ShipT*\":\"=toList\",\"ShipTo\":{\"name\":\"=toString\",\"street\":\"=toString\",\"city\":\"=toString\",\"stat*\":\"=toList\",\"state\":{\"stateName\":\"=toString\",\"stateCode\":\"=toString\"},\"zip\":\"=toInteger\"},\"BillTo\":{\"name\":\"=toString\",\"street\":\"=toString\",\"city\":\"=toString\",\"stat*\":\"=toList\",\"state\":{\"stateName\":\"=toString\",\"stateCode\":\"=toString\"},\"zip\":\"=toInteger\"},\"OrderDate\":\"=toString\"}}}]".equals(joltSpec));
 
         
